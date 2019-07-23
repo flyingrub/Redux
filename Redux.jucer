@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="eiB144" name="Redux" projectType="audioplug" jucerVersion="5.4.3"
-              pluginVST3Category="Distortion" companyName="Flyingrub" companyWebsite="flyingrub.me">
+              pluginVST3Category="Distortion" companyName="Flyingrub" companyWebsite="flyingrub.me"
+              reportAppUsage="0" displaySplashScreen="0">
   <MAINGROUP id="JDaz8Z" name="Redux">
     <GROUP id="{9C725787-98B7-1D8A-51E6-704982338622}" name="Source">
       <FILE id="ZRiu4S" name="PluginProcessor.cpp" compile="1" resource="0"
