@@ -12,6 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+#include "ReduxLookAndFeel.h"
 
 //==============================================================================
 /**
@@ -30,11 +31,15 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     ReduxAudioProcessor& processor;
-	
+	ReduxLookAndFeel look;
+
+	Label downsampleLabel, bitReductionLabel, mixLabel;
 	Slider downsampleSlider;
 	Slider bitReductionSlider;
+	Slider mixSlider;
 	AudioProcessorValueTreeState::SliderAttachment downsampleAttachment;
 	AudioProcessorValueTreeState::SliderAttachment bitReductionAttachment;
+	AudioProcessorValueTreeState::SliderAttachment mixAttachment;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReduxAudioProcessorEditor)

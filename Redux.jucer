@@ -12,6 +12,10 @@
       <FILE id="gOx1xl" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="w6gtre" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="VddrDT" name="ReduxLookAndFeel.cpp" compile="1" resource="0"
+            file="Source/ReduxLookAndFeel.cpp"/>
+      <FILE id="Ue7i0Z" name="ReduxLookAndFeel.h" compile="0" resource="0"
+            file="Source/ReduxLookAndFeel.h"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>
