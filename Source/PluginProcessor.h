@@ -62,5 +62,8 @@ public:
 
 private:
     //==============================================================================
+    AudioParameterFloat* downsample;
+    AudioParameterInt* bitReduction;
+    AudioParameterFloat* mix;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReduxAudioProcessor)
 };

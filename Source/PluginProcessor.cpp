@@ -22,15 +22,14 @@ ReduxAudioProcessor::ReduxAudioProcessor()
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
                        )
-	, state(*this, nullptr, "state", {
-		std::make_unique<AudioParameterFloat>("downSample", "DownSample", NormalisableRange<float>(0.0f, 200.0f), 0.0f),
-		std::make_unique<AudioParameterFloat>("bitReduction", "BitReduction", NormalisableRange<float>(1.0f, 32.0, 1), 32.0f),
-		std::make_unique<AudioParameterFloat>("mix", "Mix", NormalisableRange<float>(0.0f, 1.0f), 1.f)
-		})
-	, nextSampleToTake({0,0})
-	, previousSample({0,0})
+    , state(*this, nullptr)
+    , nextSampleToTake({0,0})
+    , previousSample({0,0})
 #endif
 {
+    addParameter(downsample = new AudioParameterFloat("downSample", "DownSample", NormalisableRange<float>(0.0f, 200.0f), 5.0f));
+    addParameter(bitReduction = new AudioParameterInt("bitReduction", "BitReduction", 1, 32, 8));
+    addParameter(mix = new AudioParameterFloat("mix", "Mix", NormalisableRange<float>(0.0f, 1.0f), 1.f));
 }
 
 ReduxAudioProcessor::~ReduxAudioProcessor()
@@ -102,11 +101,11 @@ void ReduxAudioProcessor::changeProgramName (int index, const String& newName)
 //==============================================================================
 void ReduxAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-	for (int i = 0; i < 2; i++)
-	{
-		nextSampleToTake[i] = 0;
-		previousSample[i] = 0;
-	}
+    for (int i = 0; i < 2; i++)
+    {
+        nextSampleToTake[i] = 0;
+        previousSample[i] = 0;
+    }
 }
 
 void ReduxAudioProcessor::releaseResources()
@@ -143,7 +142,7 @@ void ReduxAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& 
     ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
-	auto numSamples = buffer.getNumSamples();
+    auto numSamples = buffer.getNumSamples();
 
 
     // In case we have more outputs than inputs, this code clears any output
@@ -155,35 +154,35 @@ void ReduxAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-	for (int channel = 0; channel < totalNumInputChannels; ++channel)
-	{
-		auto* channelData = buffer.getWritePointer(channel);
-		int bitReduction = *state.getRawParameterValue("bitReduction");
-		float mix = *state.getRawParameterValue("mix");
+    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    {
+        auto* channelData = buffer.getWritePointer(channel);
+        int bitReduction = downsample->get();
+        float mixValue = mix->get();
 
-		for (auto i = 0; i < numSamples; ++i)
-		{
-			auto in = channelData[i];
-			float out = in;
-			if (nextSampleToTake[channel] < 1)
-			{
-				previousSample[channel] = in;
-				nextSampleToTake[channel] = *state.getRawParameterValue("downSample");
-			}
-			out = previousSample[channel];
-			
-			// REDUCE BIT DEPTH ::::: source : https://github.com/theaudioprogrammer/bitcrusherDemo/blob/master/Source/PluginProcessor.cpp#L309
-			float totalQLevels = powf(2, bitReduction/2.f);
-			float val = out;
-			float remainder = fmodf(val, 1 / totalQLevels);
+        for (auto i = 0; i < numSamples; ++i)
+        {
+            auto in = channelData[i];
+            float out = in;
+            if (nextSampleToTake[channel] < 1)
+            {
+                previousSample[channel] = in;
+                nextSampleToTake[channel] = downsample->get();
+            }
+            out = previousSample[channel];
 
-			// Quantize ...
-			out = val - remainder;
+            // REDUCE BIT DEPTH ::::: source : https://github.com/theaudioprogrammer/bitcrusherDemo/blob/master/Source/PluginProcessor.cpp#L309
+            float totalQLevels = powf(2, bitReduction);
+            float val = out;
+            float remainder = fmodf(val, 1 / totalQLevels);
 
-			channelData[i] = in * (1 - mix) + out * mix;
-			nextSampleToTake[channel]--;
-		}
-	}
+            // Quantize ...
+            out = val - remainder;
+
+            channelData[i] = in * (1 - mixValue) + out * mixValue;
+            nextSampleToTake[channel]--;
+        }
+    }
 }
 
 //==============================================================================
@@ -200,21 +199,21 @@ AudioProcessorEditor* ReduxAudioProcessor::createEditor()
 //==============================================================================
 void ReduxAudioProcessor::getStateInformation (MemoryBlock& destData)
 {
-	// Store an xml representation of our state.
-	std::unique_ptr<XmlElement> xmlState(state.copyState().createXml());
+    // Store an xml representation of our state.
+    std::unique_ptr<XmlElement> xmlState(state.copyState().createXml());
 
-	if (xmlState.get() != nullptr)
-		copyXmlToBinary(*xmlState, destData);
+    if (xmlState.get() != nullptr)
+        copyXmlToBinary(*xmlState, destData);
 }
 
 void ReduxAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-	// Restore our plug-in's state from the xml representation stored in the above
-		 // method.
-	std::unique_ptr<XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
+    // Restore our plug-in's state from the xml representation stored in the above
+         // method.
+    std::unique_ptr<XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
 
-	if (xmlState.get() != nullptr)
-		state.replaceState(ValueTree::fromXml(*xmlState));
+    if (xmlState.get() != nullptr)
+        state.replaceState(ValueTree::fromXml(*xmlState));
 }
 
 //==============================================================================
